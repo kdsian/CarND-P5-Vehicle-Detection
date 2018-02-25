@@ -1,5 +1,4 @@
-## Writeup Template
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+## Writeup
 
 ---
 
@@ -15,7 +14,7 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
+
 [image2]: ./examples/HOG_example.jpg
 [image3]: ./examples/sliding_windows.jpg
 [image4]: ./examples/sliding_window.jpg
@@ -38,40 +37,58 @@ You're reading it!
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in the 1~12 code cell of the IPython notebook (the file called `P5-Vehicle-Detection.ipynb`).  
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
-![alt text][image1]
+<center><img src="./example_images/data_look.png"></center>
+
+Color space을 변경하는 과정을 수행했습니다.
+
+우선 주어진 test 이미지 12개에 대해 RGB 영상의 histogram 을 plot 해보았습니다.
+
+<center><img src="./example_images/Histogram_Color.png"></center>
+
+ColorSpace1 의 car 이미지와 ColorSpace6의 배경 이미지가 크게 차이가 없는 것을 볼 수 있습니다. 
+
+따라서 더 좋은 결과를 위해서 color sapce 을 변경 할 필요가 있다고 판단 했습니다.
+
+어떤 color sapce로 변경하면 좋을지 판단하기 위해 여러 가지 plot 을 하여 car의 특징이 잘 categorization 되어 있는 color space 을 눈으로 찾아보았습니다.
+
+<center><img src="./example_images/color_scope_car.png"></center>
+
+<center><img src="./example_images/color_scope_noncar.png"></center>
+
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
+<center><img src="./example_images/sliding_windows.jpg"></center>
 
-![alt text][image2]
 
-#### 2. Explain how you settled on your final choice of HOG parameters.
+#### 2. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I tried various combinations of parameters and...
+ linear SVM 에 입력 데이터를 넣기 전에 feature에 대해 normalization 작업을 수행했습니다.
 
-#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+<center><img src="./example_images/Normalized_Features.png"></center>
 
-I trained a linear SVM using...
 
 ### Sliding Window Search
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+Hog 알고리즘을 sub-sampling window을 적용함으로써 sliding window search를 수행했습니다,
+<center><img src="./example_images/multi-sub.jpg"></center>
 
-![alt text][image3]
+
+
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4]
+<center><img src="./example_images/box.png"></center>
 ---
 
 ### Video Implementation
@@ -86,15 +103,22 @@ I recorded the positions of positive detections in each frame of the video.  Fro
 
 Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
-### Here are six frames and their corresponding heatmaps:
+### Here are 1 frames and their corresponding heatmaps:
 
-![alt text][image5]
+<center><img src="./example_images/threshold.png"></center>
 
 ### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
+<center><img src="./examples/labels_map.png"></center>
 
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
+
+### Here the resulting bounding boxes are drawn onto the 6 frame in the series:
+
+<center><img src="./example_images/result_test1.jpg"></center>
+<center><img src="./example_images/result_test2.jpg"></center>
+<center><img src="./example_images/result_test3.jpg"></center>
+<center><img src="./example_images/result_test4.jpg"></center>
+<center><img src="./example_images/result_test5.jpg"></center>
+<center><img src="./example_images/result_test6.jpg"></center>
 
 
 
@@ -104,5 +128,5 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+흰 차량을 잘 찾지 못하는 것을 영상에서 볼 수 있었는데, 성능 향상을 위해서 좀 더 고려해보아야할 것 같습니다.
 
