@@ -55,7 +55,10 @@ ColorSpace1 의 car 이미지와 ColorSpace6의 배경 이미지가 크게 차�
 
 어떤 color sapce로 변경하면 좋을지 판단하기 위해 여러 가지 plot 을 하여 car의 특징이 잘 categorization 되어 있는 color space 을 눈으로 찾아보았습니다.
 
+color space는 차례로 RGB, HSV, LUV, HLS, YUV 순으로 출력했습니다.
+
 <center><img src="./example_images/color_scope_car.png"></center>
+
 
 <center><img src="./example_images/color_scope_noncar.png"></center>
 
@@ -64,7 +67,7 @@ I then explored different color spaces and different `skimage.hog()` parameters 
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
-<center><img src="./example_images/sliding_windows.jpg"></center>
+<center><img src="./examples/sliding_windows.jpg"></center>
 
 
 #### 2. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
@@ -79,7 +82,7 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 Hog 알고리즘을 sub-sampling window을 적용함으로써 sliding window search를 수행했습니다,
-<center><img src="./example_images/multi-sub.jpg"></center>
+<center><img src="./examples/multi-sub.jpg"></center>
 
 
 
