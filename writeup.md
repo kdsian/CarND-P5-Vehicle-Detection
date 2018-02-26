@@ -33,9 +33,9 @@ The goals / steps of this project are the following:
 
 You're reading it!
 
-### Histogram of Oriented Gradients (HOG)
+### Feature extraction
 
-#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 1. Histograms of Color
 
 The code for this step is contained in the 1~12 code cell of the IPython notebook (the file called `P5-Vehicle-Detection.ipynb`).  
 
@@ -63,9 +63,27 @@ color space는 차례로 RGB, HSV, LUV, HLS, YUV 순으로 출력했습니다.
 <center><img src="./example_images/color_scope_noncar.png"></center>
 
 
+#### 2. Spatial Binning of Color
+color 외에도 RAW 데이터 자체 값들도 좋은 feature 요소입니다.
+
+하지만 모든 값을 그대로 feature에 넣기에는 데이터 양이 너무 많고
+
+window 크기에 따라 영향을 많이 받게 됩니다.
+
+이러한 부분을 해결하기 위해 데이터 자체를 resize 하여 개형만을 갖게하고
+
+이를 feature로 축출하게 됩니다.
+
+아래는 64x64의 입력 데이터를 `bin_spatial` 8 code cell of the IPython notebook (the file called `P5-Vehicle-Detection.ipynb`)을 이용하여 32x32로 줄인 후 일렬로 출력한 feature 값 입니다.
+
+<center><img src="./example_images/Spatially_Binned_Features.png"></center>
+
+
+#### 3. Histogram of Oriented Gradients (HOG)
+
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+Here is an example using the `YUV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
 <center><img src="./examples/sliding_windows.jpg"></center>
 
@@ -82,14 +100,21 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 Hog 알고리즘을 sub-sampling window을 적용함으로써 sliding window search를 수행했습니다,
-<center><img src="./examples/multi-sub.jpg"></center>
+<center><img src="./example_images/HOG_Features.png"></center>
 
 
 
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+
+처음 시도 시에는 HSV나 다른 color space에서 한 채널만 이용하는 것이 물체를 구별할 떄 좋게 작용할 것으로 예상했습니다.
+
+그러나 RBG, HSV, LUV, YCrCb를 수행해볼 때, 한 채널만을 이용하여 feature 을 축출하는 것 보다 모든 채널을 이용하는 것이 더 높은 정확도를 갖아 `'ALL'` 로 파라미터를 고정하였습니다.
+
+color space는 그 중 가장 정확도가 높게 측정된 LUV를 사용하였습니다.
+
+아래는 이를 이용한 예시 그림 입니다.
 
 <center><img src="./example_images/box.png"></center>
 ---
@@ -131,5 +156,38 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-흰 차량을 잘 찾지 못하는 것을 영상에서 볼 수 있었는데, 성능 향상을 위해서 좀 더 고려해보아야할 것 같습니다.
+False positive 을 줄이는 과정이 중요합니다.
 
+하지만 threshold 을 너무 낮추면 차량이 존재해도 찾지 못하는 경우가 발생할 수 도 있습니다.
+
+이 때, 앞선 line detection 처럼 영상의 이미지에서 line을 찾을 때 기존에 찾은 line의 정보를 이용하여 예측하게 되면 어느 정도 신뢰성 있는 결과를 얻을 수 있는 것을 배웠습니다.
+
+이 과정을 일부 적용하기 위해 udacity 리뷰의 아래와 같은 코멘트를 참고하였습니다.
+
+```(python)
+# Create deque for caching 10 frames
+from collections import deque
+cache = deque(maxlen=10)
+(...)
+
+# Find boxes on each scale, simplified
+boxes = find_cars(img, scale)
+heat = add_heat(heat, boxes)
+
+# Add current heatmap to cache
+cache.append(heat)
+
+# Accumulate heatmaps for thresholding, might use average as well
+heat = np.sum(cache, axis=0)
+
+# Apply a larger threshold as heat from cars should dominate
+heat = apply_threshold(heat, 8)
+(...)
+```
+FIFP 메모리를 하나 선언하여 얻을 box 값을을 채워 넣고 
+
+해당 FIFO의 sum 값을 heat 함수에 넣으면 정말로 차량이 존재하는 부분에서는 많은 heat 값들이 return 될 것입니다.
+
+따라서 threshold를 높힐수 있는 근거가 되고 이렇게 구성할 경우
+
+False negative을 줄일 수 있게 됩니다.
