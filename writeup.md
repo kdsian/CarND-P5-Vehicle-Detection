@@ -6,10 +6,10 @@
 
 The goals / steps of this project are the following:
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
+* Perform a **Histogram of Oriented Gradients (HOG)** feature extraction on a labeled training set of images and train a classifier **Linear SVM classifier**
+* Optionally, you can also apply a **color transform** and append binned color features, as well as histograms of color, to your HOG feature vector. 
 * Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
-* Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
+* Implement a **sliding-window technique** and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
 
@@ -27,19 +27,15 @@ The goals / steps of this project are the following:
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-### Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
-
-You're reading it!
-
 ### Feature extraction
 
 #### 1. Histograms of Color
 
 The code for this step is contained in the 1~12 code cell of the IPython notebook (the file called `P5-Vehicle-Detection.ipynb`).  
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+우선 'vehicle'과 'non-vehicle' 이미지를 읽어보는 과정을 수행했습니다.
+아래 그림은 'vehicle'과 'non-vehicle'의 classes 예시입니다.
+(64x64 size)
 
 <center><img src="./example_images/data_look.png"></center>
 
@@ -75,22 +71,59 @@ window 크기에 따라 영향을 많이 받게 됩니다.
 이를 feature로 축출하게 됩니다.
 
 아래는 64x64의 입력 데이터를 `bin_spatial` 8 code cell of the IPython notebook (the file called `P5-Vehicle-Detection.ipynb`)을 이용하여 32x32로 줄인 후 일렬로 출력한 feature 값 입니다.
+(32x32x3:channel수=3072)
 
 <center><img src="./example_images/Spatially_Binned_Features.png"></center>
 
 
 #### 3. Histogram of Oriented Gradients (HOG)
+HOG 과정에 대해 설명드리겠습니다.
+우선, 일반적인 차의 gradient 그림은 아래와 같이 주어질 때,
+<center><img src="./example_images/HOG_example1.png"></center>
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
+이를 일부 gorup으로 나누면 아래와 같이 구성됩니다. (8x8)
+<center><img src="./example_images/HOG_example2.png"></center>
 
-Here is an example using the `YUV` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+확대 하면 아래와 같이 group내 각 pixel의 grdient로 구성되어 있는 것을 알 수 있습니다.
+<center><img src="./example_images/HOG_example3.png"></center>
 
-<center><img src="./examples/sliding_windows.jpg"></center>
+해당 group의 vector로 표시하면 아래와 같이 표시 됩니다.
+<center><img src="./example_images/HOG_example4.png"></center>
+
+<center><img src="./example_images/HOG_example5.png"></center>
+
+<center><img src="./example_images/HOG_example6.png"></center>
+
+최종적으로 HOG feature을 보면 아래와 같이 구성됩니다.
+<center><img src="./example_images/HOG_example7.png"></center>
+
+이와 같은 방식으로 구성한 feature을 HOG feature라 하고 
+
+가장 특징적인 부분은 그룹에 vector가 큰 값에 dominant 하게 영향을 받기 때문에 noise의 영향을 적게 받는 다는 점 입니다.
+
+`skimage.hog()` 함수를 살펴보면 parameters는 `orientations`, `pixels_per_cell`, and `cells_per_block` 이 존재해서 이를 tuning이 필요한데 이 부분은 아직 진행하지 못했습니다.
+
+실제 결과를 보여드리기 위해 car classes 영상에 대한 `skimage.hog()` 결과를 보여드리겠습니다
+ 
+ 우선 RGB 영상에 대해 수행했고 HOG parameter는 아래와 같이 지정하였습니다.
+ `orientations=9`, `pixels_per_cell=(8, 8)`, `cells_per_block=(2, 2)`
+
+<center><img src="./example_images/HOG_Features.png"></center>
 
 
 #### 2. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
- linear SVM 에 입력 데이터를 넣기 전에 feature에 대해 normalization 작업을 수행했습니다.
+ linear SVM 에 입력 데이터를 넣기 전에 feature에 대해 normalization 작업을 수행했습니다. (T.B.D.)
+```python
+ # Create an array stack of feature vectors
+X = np.vstack((car_features, notcar_features)).astype(np.float64)   
+
+# Fit a per-column scaler
+X_scaler = StandardScaler().fit(X)
+
+# Apply the scaler to X
+scaled_X = X_scaler.transform(X)
+```
 
 <center><img src="./example_images/Normalized_Features.png"></center>
 
@@ -99,16 +132,21 @@ Here is an example using the `YUV` color space and HOG parameters of `orientatio
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-Hog 알고리즘을 sub-sampling window을 적용함으로써 sliding window search를 수행했습니다,
-<center><img src="./example_images/HOG_Features.png"></center>
+이제 실제 카메라 영상에 차량을 판단하기 위해서는 window을 sliding 하며 실제 차량이 있는 부분을 찾아야합니다.
+<center><img src="./example_images/Sliding_window_ex0.png"></center>
 
+하지만 실제 영상에서는 원근법에 의해서 차량의 window가 위치에 따라 크기가 달라질 필요가 있습니다.
 
+<center><img src="./example_images/Sliding_window_ex1.png"></center>
 
+<center><img src="./example_images/Sliding_window_ex2.png"></center>
+
+(구현 T.B.D.)
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 
-처음 시도 시에는 HSV나 다른 color space에서 한 채널만 이용하는 것이 물체를 구별할 떄 좋게 작용할 것으로 예상했습니다.
+처음 시도 시에는 HSV나 다른 color space에서 한 채널(ex H channel)만 이용하는 것이 물체를 구별할 떄 좋게 작용할 것으로 예상했습니다.
 
 그러나 RBG, HSV, LUV, YCrCb를 수행해볼 때, 한 채널만을 이용하여 feature 을 축출하는 것 보다 모든 채널을 이용하는 것이 더 높은 정확도를 갖아 `'ALL'` 로 파라미터를 고정하였습니다.
 
@@ -122,7 +160,9 @@ color space는 그 중 가장 정확도가 높게 측정된 LUV를 사용하였�
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+최종 결과 영상은 아래 링크에 있습니다.
+
+[link to my video result](./output_images/project_video.mp4)
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
@@ -139,7 +179,7 @@ Here's an example result showing the heatmap from a series of frames of video, t
 <center><img src="./examples/labels_map.png"></center>
 
 
-### Here the resulting bounding boxes are drawn onto the 6 frame in the series:
+### Here the resulting bounding boxes are drawn :
 
 <center><img src="./example_images/result_test1.jpg"></center>
 <center><img src="./example_images/result_test2.jpg"></center>
